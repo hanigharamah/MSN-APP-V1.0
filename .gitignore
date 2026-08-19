@@ -1,0 +1,18 @@
+.env
+.env.local
+.expo/
+.supabase-db-password
+node_modules/
+.stripe-secrets.env
+
+# --- Generated native projects -----------------------------------------------
+# `expo prebuild` regenerates both from app.config.ts, and together they are
+# ~5.5 GB of build artefacts. Excluded for size — and for safety: a built
+# bundle inlines EXPO_PUBLIC_* values, including the Supabase anon key.
+ios/
+android/
+
+# Contains the linked Supabase project reference.
+supabase/.temp/
+
+.DS_Store
