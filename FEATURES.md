@@ -3,7 +3,7 @@
 The new React Native app (`msn-app/`) against the existing Laravel web app
 (`mysourcenetwork-events/`, read-only reference).
 
-**Last updated:** 18 Aug 2026 · 46 migrations · 33 screens · 6 Edge Functions
+**Last updated:** 18 Aug 2026 · 48 migrations · 33 screens · 8 Edge Functions
 
 > **Keep this current.** Update it in the same change that builds the feature,
 > not afterwards — a list that lags is worse than no list, because it gets
@@ -32,7 +32,7 @@ that belong on web, not in a phone app.
 |---|---|---|
 | 🚩 Real payments — server | **Done** | Stripe test key is set. `create-checkout` returns a real PaymentIntent, the order stays `pending`, and `ALLOW_PAYMENT_BYPASS` has been **removed** so nothing can silently mark orders paid again. Verified: old order `paid/bypassed`, new orders `pending` with real `pi_…` ids. |
 | Real payments — card sheet | **Done** | Verified end to end on a device: Stripe sheet opened, `4242` card charged £30.80, webhook marked the order **paid** and issued a real ticket. |
-| 🚩 Payouts | **Not built** | Practitioners cannot be paid at all. Needs Stripe Connect onboarding. The secret key is now set, so this is unblocked. |
+| 🚩 Payouts | **Partial** | Built on the **old app's model**: the platform holds 100% of every payment, the practitioner requests a withdrawal, an admin approves, a Stripe transfer goes out. Schema, balance maths and both Edge Functions are done and deployed (`connect-onboarding`, `process-withdrawal`). Balance verified live; the request function refuses amounts above the available balance and refuses accounts that have not finished onboarding. **Blocked on one thing:** Connect is not enabled on the Stripe account — `accounts.create` returns *"You can only create new accounts if you've signed up for Connect"*. Enable it at dashboard.stripe.com/connect. **Not built yet:** the Payouts screen (still shows "Soon") and the admin approval queue. **Note the model carries regulatory exposure** — holding other people's money is what money-transmission licensing turns on; needs counsel before the US or Mexico. |
 | 🚩 Apple in-app purchase | **Not built** | Guideline 3.1.3(d) forces IAP on **one-to-many** live online events only. One-to-one online sessions may keep using Stripe. |
 
 Everything else that was blocking is now done — see below.
@@ -123,7 +123,7 @@ Everything else that was blocking is now done — see below.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Supabase backend | **Done** | 46 migrations, row-level security on every table. |
+| Supabase backend | **Done** | 48 migrations, row-level security on every table. |
 | Server functions | **Done** | Checkout, booking, refund request, refund decision, push, Stripe webhook. |
 | Stripe webhook wiring | **Done** | Endpoint registered in Stripe (`payment_intent.succeeded` / `.payment_failed`) and its signing secret set. **This was missing entirely** — payments succeeded and orders never fulfilled. |
 | Live messaging & notifications | **Done** | |
