@@ -66,13 +66,18 @@ adb --version
 
 ## 2. Get the code
 
-You will be sent a zip of the `msn-app` folder. Unzip it somewhere with a
-**short path** — `C:\dev\msn-app` is ideal. Windows has a 260-character path
-limit and Node projects nest deeply; unzipping into `Downloads\...\...` is the
-single most common cause of confusing build failures.
+```
+git clone https://github.com/hanigharamah/MSN-APP-V1.0.git
+```
 
-The zip will not include `node_modules` (you generate it) or `ios/` (useless on
-Windows).
+Clone it somewhere with a **short path** — `C:\dev\msn` is ideal. Windows has a
+260-character path limit and Node projects nest deeply; cloning into
+`Downloads\...\...` is the single most common cause of confusing build
+failures.
+
+The repo does not contain `node_modules` (you generate it) or `ios/` (4.7 GB of
+build artefacts, and unusable on Windows anyway). `app/android/` **is**
+included, so the native project is ready to build.
 
 ## 3. Create your environment file
 
@@ -109,9 +114,12 @@ minutes** and a lot of output. Later runs take seconds.
 If no emulator is running, start one first: Android Studio → **Device Manager**
 → **Create Device** → Pixel 8 → a recent API level → Finish → press play.
 
-The `android/` folder is already generated and included, so you should not need
-`expo prebuild`. If you ever do run it, be aware it **deletes and regenerates**
-that folder.
+The `app/android/` folder is committed, so you do **not** need to run
+`expo prebuild` — clone, install, run.
+
+If you ever do run `npx expo prebuild --platform android`, be aware it
+**deletes and regenerates** that folder. You only need it if something native
+changes in `app.config.ts` — a permission, the package id, an icon.
 
 ---
 

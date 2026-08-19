@@ -6,11 +6,25 @@ node_modules/
 .stripe-secrets.env
 
 # --- Generated native projects -----------------------------------------------
-# `expo prebuild` regenerates both from app.config.ts, and together they are
-# ~5.5 GB of build artefacts. Excluded for size — and for safety: a built
-# bundle inlines EXPO_PUBLIC_* values, including the Supabase anon key.
+# `expo prebuild` regenerates both from app.config.ts. Measured, not guessed:
+#
+#   ios/      4.7 GB — 3.4 GB of build output and 1.2 GB of CocoaPods
+#   android/  264 KB — checked in, see below
+#
+# `ios/` stays out because of that 4.7 GB, essentially all of it build artefacts
+# rather than source, and because it is unusable on a PC anyway.
+#
+# `android/` IS committed. It is tiny, and Expo generates its own
+# `android/.gitignore` covering `build/`, `.gradle`, `local.properties`, `.cxx/`
+# and `*.jsbundle` — so the build output and the machine-specific SDK path stay
+# out on their own, and only source is tracked. Committing it makes the repo
+# plug-and-play for a Windows developer, who would otherwise have to prebuild
+# before the project would open at all.
+#
+# The trade: `android/` no longer regenerates automatically. If `app.config.ts`
+# changes anything native — permissions, package id, icons — re-run
+# `npx expo prebuild --platform android` and commit the result.
 ios/
-android/
 
 # Contains the linked Supabase project reference.
 supabase/.temp/
