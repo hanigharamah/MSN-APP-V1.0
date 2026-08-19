@@ -20,6 +20,7 @@ const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
   venue: 'Venue',
   nonprofit: 'Non-profit',
   organizer: 'Organiser',
+  social_impact: 'Social impact',
 };
 
 export function accountTypeLabel(accountType: AccountType): string {

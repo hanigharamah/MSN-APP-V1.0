@@ -15,6 +15,7 @@ const ACCOUNT_LABEL: Record<AccountType, string> = {
   venue: 'Venue',
   nonprofit: 'Non-profit',
   organizer: 'Organiser',
+  social_impact: 'Social impact',
 };
 
 /** Human label for `profiles.account_type`. Read-only everywhere it appears. */

@@ -193,6 +193,13 @@ export const qk = {
     unreadCount: (viewerId: string) => ['conversations', viewerId, 'unread-count'] as const,
   },
 
+  accounts: {
+    all: ['accounts'] as const,
+    // Per viewer: the list is "who may I act as", which is a different answer
+    // for every person signing in on the same device.
+    mine: (viewerId: string) => ['accounts', viewerId, 'mine'] as const,
+  },
+
   notifications: {
     all: ['notifications'] as const,
     list: (viewerId: string) => ['notifications', viewerId, 'list'] as const,

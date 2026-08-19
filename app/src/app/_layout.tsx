@@ -11,6 +11,7 @@ import { PhotoConsentGate } from '@/components/consent/PhotoConsentGate';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ActiveAccountProvider } from '@/context/ActiveAccountContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ModeProvider } from '@/context/ModeContext';
 import { createQueryClient } from '@/lib/query-client';
@@ -33,7 +34,12 @@ export default function RootLayout() {
               {/* Inside AuthProvider: mode is read per profile, so it needs
                   the session to exist before it can load the right one. */}
               <ModeProvider>
-                <RootNavigator />
+                {/* Inside ModeProvider: the two compose — you can be hosting
+                    *as* a business — and the account choice is read per
+                    signed-in person, so it needs the session too. */}
+                <ActiveAccountProvider>
+                  <RootNavigator />
+                </ActiveAccountProvider>
               </ModeProvider>
             </AuthProvider>
           </QueryClientProvider>

@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_members: {
+        Row: {
+          account_id: string
+          created_at: string
+          member_id: string
+          role: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          member_id: string
+          role?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          member_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_members_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability_blocks: {
         Row: {
           ends_at: string
@@ -1615,6 +1651,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["account_type"]
       }
+      auth_can_act_as: { Args: { p_account: string }; Returns: boolean }
       auth_in_conversation: {
         Args: { p_conversation: string }
         Returns: boolean
@@ -1667,6 +1704,18 @@ export type Database = {
         Returns: undefined
       }
       is_blocked_between: { Args: { p_other: string }; Returns: boolean }
+      list_my_accounts: {
+        Args: never
+        Returns: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          avatar_url: string
+          display_name: string
+          handle: string
+          id: string
+          is_self: boolean
+          role: string
+        }[]
+      }
       min_price_cents: {
         Args: { "": Database["public"]["Tables"]["events"]["Row"] }
         Returns: {
@@ -1689,8 +1738,12 @@ export type Database = {
       search_events: {
         Args: {
           category?: string
+          delivery?: Database["public"]["Enums"]["delivery_mode"][]
+          free_only?: boolean
           from_date?: string
           limit_n?: number
+          max_price?: number
+          min_price?: number
           near_lat?: number
           near_lng?: number
           offset_n?: number
@@ -1805,6 +1858,7 @@ export type Database = {
         | "venue"
         | "nonprofit"
         | "organizer"
+        | "social_impact"
       booking_status:
         | "requested"
         | "confirmed"
@@ -1965,6 +2019,7 @@ export const Constants = {
         "venue",
         "nonprofit",
         "organizer",
+        "social_impact",
       ],
       booking_status: [
         "requested",

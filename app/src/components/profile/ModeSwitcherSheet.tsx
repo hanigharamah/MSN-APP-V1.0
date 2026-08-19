@@ -1,10 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { BottomSheet } from '@/components/events';
 import { Avatar, Text } from '@/components/ui';
+import { useActiveAccount } from '@/context/ActiveAccountContext';
 import { useAuth } from '@/context/AuthContext';
 import { useMode, type AppMode } from '@/context/ModeContext';
+import { ACCOUNT_TYPE_LABEL, listMyAccounts } from '@/lib/queries/accounts';
+import { qk } from '@/lib/queries/keys';
 import { iconSizes, MIN_TOUCH_TARGET, radii, spacing, useTheme } from '@/theme';
 
 export interface ModeSwitcherSheetProps {
@@ -51,6 +55,17 @@ export function ModeSwitcherSheet({ visible, onClose }: ModeSwitcherSheetProps) 
   const theme = useTheme();
   const { profile } = useAuth();
   const { mode, setMode } = useMode();
+  const { activeAccountId, setActiveAccountId } = useActiveAccount();
+
+  // Only fetched while the sheet is up. Most people hold exactly one account and
+  // will never see this section; asking for the list on every launch would be a
+  // request per app open to render nothing.
+  const accounts = useQuery({
+    queryKey: qk.accounts.mine(profile?.id ?? ''),
+    queryFn: listMyAccounts,
+    enabled: visible && profile !== null,
+    staleTime: 5 * 60_000,
+  });
 
   if (profile === null) return null;
 
@@ -60,7 +75,10 @@ export function ModeSwitcherSheet({ visible, onClose }: ModeSwitcherSheetProps) 
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Switch mode">
+    <BottomSheet visible={visible} onClose={onClose} title="Switch">
+      <Text variant="bodySmall" color="secondary" style={styles.sectionLabel}>
+        Switch mode
+      </Text>
       <View style={styles.rows} accessibilityRole="radiogroup">
         {ROWS.map((row) => {
           const selected = mode === row.value;
@@ -111,11 +129,83 @@ export function ModeSwitcherSheet({ visible, onClose }: ModeSwitcherSheetProps) 
           );
         })}
       </View>
+
+      {/* Accounts, under modes — the order the request described, and the right
+          one: switching mode is the everyday action and switching account is
+          the occasional one, so the frequent thing stays under the thumb.
+
+          Rendered only when there is more than one account. A person with a
+          single profile has nothing to choose between, and a section headed
+          "Account" listing exactly themselves reads as a feature that is
+          broken rather than one that is inapplicable. */}
+      {(accounts.data?.length ?? 0) > 1 ? (
+        <View style={styles.accounts}>
+          <Text variant="bodySmall" color="secondary" style={styles.sectionLabel}>
+            Switch account
+          </Text>
+
+          <View style={styles.rows} accessibilityRole="radiogroup">
+            {accounts.data?.map((account) => {
+              const selected = (activeAccountId ?? profile.id) === account.id;
+              return (
+                <Pressable
+                  key={account.id}
+                  onPress={() => {
+                    setActiveAccountId(account.id);
+                    onClose();
+                  }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected, checked: selected }}
+                  accessibilityLabel={`${account.display_name}. ${ACCOUNT_TYPE_LABEL[account.account_type]}${account.is_self ? '. Your own account' : ''}`}
+                  style={({ pressed }) => [
+                    styles.row,
+                    {
+                      borderColor: selected ? theme.colors.accent : theme.colors.border,
+                      backgroundColor: pressed
+                        ? theme.colors.surfaceMuted
+                        : selected
+                          ? theme.colors.accentSubtle
+                          : theme.colors.surface,
+                    },
+                  ]}
+                >
+                  <Avatar
+                    uri={account.avatar_url}
+                    name={account.display_name}
+                    size="md"
+                  />
+
+                  <View style={styles.text}>
+                    <Text variant="bodyStrong" numberOfLines={1}>
+                      {account.display_name}
+                    </Text>
+                    <Text variant="caption" color="muted" numberOfLines={1}>
+                      {account.is_self
+                        ? 'You'
+                        : ACCOUNT_TYPE_LABEL[account.account_type]}
+                    </Text>
+                  </View>
+
+                  {selected ? (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={iconSizes.lg}
+                      color={theme.colors.accent}
+                    />
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  accounts: { marginTop: spacing.lg, gap: spacing.xs },
+  sectionLabel: { marginBottom: spacing.xxs },
   rows: {
     gap: spacing.sm,
   },

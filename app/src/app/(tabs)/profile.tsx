@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Linking, RefreshControl, StyleSheet, View } from 'react-native';
@@ -10,15 +10,18 @@ import {
   ProfileHeader,
   SettingsRow,
   accountTypeLabel,
+  ModeSwitcherSheet,
 } from '@/components/profile';
 import { BookingStatusSection } from '@/components/provider-tools/availability';
 import { FormError } from '@/components/auth/FormError';
 import { Button, Card, ErrorState, Screen, Skeleton, Text } from '@/components/ui';
 import { SignedOut } from '@/components/auth/SignedOut';
+import { useActiveAccount } from '@/context/ActiveAccountContext';
 import { useAuth } from '@/context/AuthContext';
 import { useMode } from '@/context/ModeContext';
 import { toAppError } from '@/lib/errors';
 import { formatLocal } from '@/lib/format';
+import { listMyAccounts } from '@/lib/queries/accounts';
 import { qk } from '@/lib/queries/keys';
 import { becomePractitioner } from '@/lib/queries/profiles';
 import { cancelAccountDeletion } from '@/lib/queries/safety';
@@ -65,6 +68,17 @@ export default function ProfileScreen() {
   const [deleting, setDeleting] = useState(false);
 
   const { mode, toggle, setMode } = useMode();
+  const { activeAccountId } = useActiveAccount();
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+
+  // Shared cache with the long-press sheet, so opening one after the other does
+  // not refetch and the two can never disagree about which account is active.
+  const accounts = useQuery({
+    queryKey: qk.accounts.mine(profile?.id ?? ''),
+    queryFn: listMyAccounts,
+    enabled: profile !== null,
+    staleTime: 5 * 60_000,
+  });
 
   const becomeProvider = useMutation({
     mutationFn: becomePractitioner,
@@ -325,6 +339,24 @@ export default function ProfileScreen() {
                 does not have that tab on screen. It switches them rather than
                 deep-linking, because landing on a tab that is not in the bar
                 you are looking at is disorienting. */}
+            {/* Switching account, in the place someone would look for it —
+                the long-press on the tab icon is faster but undiscoverable,
+                and a gesture must never be the only route to a feature.
+                Rendered only when there is more than one account to choose
+                between; a row that opens a list of exactly yourself reads as
+                broken rather than inapplicable. */}
+            {(accounts.data?.length ?? 0) > 1 ? (
+              <SettingsRow
+                icon="swap-horizontal-outline"
+                label="Switch account"
+                value={
+                  accounts.data?.find((a) => a.id === (activeAccountId ?? profile?.id))
+                    ?.display_name
+                }
+                onPress={() => setSwitcherOpen(true)}
+              />
+            ) : null}
+
             <SettingsRow
               icon="sparkles-outline"
               label="Listings"
@@ -473,7 +505,9 @@ export default function ProfileScreen() {
       />
 
       <DeleteAccountSheet visible={deleting} onClose={() => setDeleting(false)} />
-      </Screen>
+  
+      <ModeSwitcherSheet visible={switcherOpen} onClose={() => setSwitcherOpen(false)} />
+    </Screen>
 
       {/* Sits outside `Screen` on purpose: inside it, the bubble would be
           content in a ScrollView and would scroll away from the tab it is
