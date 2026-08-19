@@ -81,15 +81,16 @@ included, so the native project is ready to build.
 
 ## 3. Create your environment file
 
-In the `app` folder, copy `.env.example` to `.env`:
+The clone gives you a folder called `MSN-APP-V1.0`. The app itself lives in
+`app` inside it:
 
 ```
-cd app
+cd MSN-APP-V1.0\app
 copy .env.example .env
 ```
 
 Open `.env` and fill in the two Supabase values. **They will be sent to you
-separately** — they are not in this document and not in the zip.
+separately** — they are not in this document and not in the repository.
 
 ```
 EXPO_PUBLIC_SUPABASE_URL=...
@@ -101,7 +102,7 @@ server at runtime, so you do not need it here, and the bundle id has a default.
 
 ## 4. Install and run
 
-From the `app` folder:
+From that same `MSN-APP-V1.0\app` folder:
 
 ```
 npm install
@@ -172,6 +173,7 @@ and what is not. Trust it over anything else.
 ## Checking your work
 
 ```
+cd MSN-APP-V1.0\app
 npm run typecheck
 npm run lint
 ```
