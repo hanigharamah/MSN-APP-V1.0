@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActiveAccountProvider } from '@/context/ActiveAccountContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ModeProvider } from '@/context/ModeContext';
+import { usePush } from '@/lib/push/usePush';
 import { createQueryClient } from '@/lib/query-client';
 import { ThemeProvider, useAppFonts, useTheme } from '@/theme';
 
@@ -66,6 +67,9 @@ function RootNavigator() {
   const router = useRouter();
   const segments = useSegments();
   const { isAuthenticated, initialising } = useAuth();
+  // Device registration and notification taps. Inside RootNavigator because it
+  // needs both the session and the router.
+  usePush();
   // Global, not local: this layout's own route has no params — the one that
   // carries `redirect` is the sign-in screen currently on top of it.
   const { redirect } = useGlobalSearchParams<{ redirect?: string }>();

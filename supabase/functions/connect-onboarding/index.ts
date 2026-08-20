@@ -29,8 +29,12 @@ import { json, serveJson } from "../_shared/errors.ts";
 import { adminClient, requireUser } from "../_shared/supabase.ts";
 import { stripeClient, translateStripeError } from "../_shared/stripe.ts";
 
-const RETURN_URL = "msn://payouts?onboarding=complete";
-const REFRESH_URL = "msn://payouts?onboarding=refresh";
+// Account Links reject custom schemes — `msn://…` comes back as "Not a valid
+// URL". These point at the `connect-return` function, which is a web page whose
+// only job is to bounce the practitioner back into the app.
+const FUNCTIONS_BASE = `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
+const RETURN_URL = `${FUNCTIONS_BASE}/connect-return?state=complete`;
+const REFRESH_URL = `${FUNCTIONS_BASE}/connect-return?state=refresh`;
 
 Deno.serve(serveJson(async (req: Request) => {
   const caller = await requireUser(req);
@@ -51,7 +55,11 @@ Deno.serve(serveJson(async (req: Request) => {
         type: "express",
         email: caller.profile.email ?? undefined,
         capabilities: { transfers: { requested: true } },
-        business_type: "individual",
+        // `business_type` is deliberately NOT set. It is country-dependent —
+        // "individual" is rejected outright in the UAE, where this platform is
+        // registered — and Stripe's hosted onboarding asks the practitioner for
+        // it anyway, in the form appropriate to wherever they are. Guessing it
+        // here can only be wrong somewhere.
         metadata: { profile_id: caller.profile.id },
       });
       accountId = account.id;

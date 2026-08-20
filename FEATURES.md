@@ -68,7 +68,7 @@ Everything else that was blocking is now done — see below.
 | Reschedule a booking | **Not built** | Cancel only. The old app has request-and-approve both ways. |
 | Change email / password in-app | **Not built** | |
 | Notification preferences | **Not built** | No per-type control or pause. |
-| Push delivery | **Not built** | Nothing registers a device; sending never exercised. In-app notifications are unaffected. **Blocks the push half of photo consent** — the notification row is created by a database trigger and is ready to send, but nothing delivers it. |
+| Push delivery | **Partial** | The device half is now built: permission, Expo token, upsert into `push_tokens` (idempotent — verified), sign-out cleanup, foreground banners, and tap-to-open with the deep link guarded by `isSafeRedirect`. Message notifications added to match the old app (trigger on `messages`; skips the sender, muted threads and blocks both ways — all verified). **Two things still block real delivery:** `EAS_PROJECT_ID` is unset, so no Expo token can be minted; and the iOS Simulator has no APNs connection, so it can never receive one. Needs an EAS project and a physical device. |
 | Social login (Apple / Google) | **Not built** | If any social login ships, Sign in with Apple becomes mandatory. |
 | Coupons / discount codes | **Not built** | |
 | Wallet & top-up | **Not built** | |
