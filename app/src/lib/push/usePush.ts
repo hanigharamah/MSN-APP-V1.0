@@ -60,10 +60,10 @@ export function usePush(): void {
     registeredFor.current = profileId;
 
     void registerForPush(profileId).then((result) => {
-      if (!result.ok && result.reason !== 'not-a-device' && result.reason !== 'denied') {
-        // A refusal and a simulator are expected states, not faults. Anything
-        // else is worth seeing in the log.
-        console.warn('[push] not registered:', result.reason, result.detail ?? '');
+      if (!result.ok && result.reason !== 'denied') {
+        // A refusal is a choice, not a fault. Everything else — no EAS project,
+        // no APNs registration on this device — is worth seeing in the log.
+        console.warn('[push] no token:', result.reason, result.detail ?? '');
       }
     });
   }, [isAuthenticated, profileId]);

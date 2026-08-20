@@ -1,5 +1,4 @@
 import Constants from 'expo-constants';
-import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
@@ -32,14 +31,19 @@ import { supabase } from '@/lib/supabase';
  */
 export type PushRegistration =
   | { ok: true; token: string }
-  | { ok: false; reason: 'not-a-device' | 'denied' | 'no-project-id' | 'error'; detail?: string };
+  | { ok: false; reason: 'denied' | 'no-project-id' | 'no-token'; detail?: string };
 
 export async function registerForPush(profileId: string): Promise<PushRegistration> {
-  // The iOS Simulator has no APNs connection and can never receive a remote
-  // push; Android emulators can. Checked explicitly so the failure reads as
-  // "this device cannot" rather than as a bug in the code below.
-  if (!Device.isDevice) return { ok: false, reason: 'not-a-device' };
-
+  // Permission is requested BEFORE the simulator check, and that ordering is
+  // load-bearing. An earlier version bailed out on `!Device.isDevice` first,
+  // which meant the simulator never got a permission prompt — and iOS silently
+  // drops notifications for an app that has not been granted it. The result was
+  // `xcrun simctl push` reporting success while nothing appeared, which looks
+  // like a broken payload and is not.
+  //
+  // Simulators HAVE been able to display pushed payloads since Xcode 11.4, and
+  // on Apple Silicon with a recent iOS they can register with APNs for real.
+  // Treating them as incapable was simply wrong.
   const existing = await Notifications.getPermissionsAsync();
   let status = existing.status;
 
@@ -47,6 +51,7 @@ export async function registerForPush(profileId: string): Promise<PushRegistrati
     status = (await Notifications.requestPermissionsAsync()).status;
   }
   if (status !== 'granted') return { ok: false, reason: 'denied' };
+
 
   // Required since SDK 49. Without it `getExpoPushTokenAsync` throws, and the
   // message is about the project rather than about push — confusing at the
@@ -74,16 +79,20 @@ export async function registerForPush(profileId: string): Promise<PushRegistrati
         profile_id: profileId,
         token,
         platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web',
-        device_name: Device.deviceName ?? null,
+        device_name: Platform.OS,
         last_seen_at: new Date().toISOString(),
       },
       { onConflict: 'profile_id,token' },
     );
-    if (error) return { ok: false, reason: 'error', detail: error.message };
+    if (error) return { ok: false, reason: 'no-token', detail: error.message };
 
     return { ok: true, token };
   } catch (err) {
-    return { ok: false, reason: 'error', detail: err instanceof Error ? err.message : String(err) };
+    // Attempting the token IS the capability check — there is deliberately no
+    // `expo-device` probe. A simulator without an APNs registration throws
+    // here, and so does a misconfigured project; the message says which, and
+    // either way the outcome is the same: no push, everything else unaffected.
+    return { ok: false, reason: 'no-token', detail: err instanceof Error ? err.message : String(err) };
   }
 }
 
